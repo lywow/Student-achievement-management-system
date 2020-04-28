@@ -1,0 +1,247 @@
+/*班级表*/
+CREATE TABLE Qinjj_Class10
+(
+ qjj_Classno10 CHAR(12) PRIMARY KEY,/*班级编号*/
+ qjj_Deptname10 CHAR(20),/*专业名称*/
+)
+
+/*学生表*/
+CREATE TABLE Qinjj_Student10
+( qjj_Sno10 CHAR(12) PRIMARY KEY ,/*学号*/
+  qjj_Spass10 CHAR(15) DEFAULT 123456,/*登录密码（默认123456）*/
+  qjj_Classno10 CHAR(12) NOT NULL,/*班级编号*/
+  qjj_Sname10 CHAR(20),/*姓名*/
+  qjj_Ssex10 CHAR(2),/*性别*/
+  qjj_Sage10 INT CHECK(qjj_Sage10>0),/*年龄*/
+  qjj_Scredit10 char(8),/*已修学分*/
+  qjj_Splace10 CHAR(20),/*生源地*/
+  CONSTRAINT ClassNo_Students FOREIGN KEY (qjj_ClassNo10) REFERENCES Qinjj_Class10,
+  /*qjj_Classno10是Qinjj_Class10的外键*/
+)
+
+/*教师表*/
+CREATE TABLE Qinjj_Teacher10
+(
+ qjj_Tno10 CHAR(12) PRIMARY KEY,/*教师编号*/
+ qjj_Tname10 CHAR(20),/*姓名*/
+ qjj_Tsex10 CHAR(2),/*性别*/
+ qjj_Tage10 INT CHECK(qjj_Tage10>0),/*年龄*/
+ qjj_Ttitle10  CHAR(12),/*职称*/
+ qjj_Tphone10 CHAR(15),/*联系电话*/ 
+ qjj_Tpass10 CHAR(15) DEFAULT 123456,/*登录密码（默认123456）*/
+ )
+
+/*课程表*/
+ CREATE TABLE Qinjj_Course10
+(
+ qjj_Cno10 CHAR(12) PRIMARY KEY,/*课程编号*/ 
+ qjj_Cname10 CHAR(20) NOT NULL,/*课程名称*/ 
+ qjj_Cterm10 CHAR(12),/*开课学期*/
+ qjj_Ctime10 INT CHECK(qjj_Ctime10>0),/*学时*/
+ qjj_Ctestway10 CHAR(5),/*考核方式*/
+ qjj_Ccredit10 INT CHECK(qjj_Ccredit10>0),/*学分*/
+)
+
+/*班级开设课程表*/
+CREATE TABLE Qinjj_CC10
+(
+ qjj_Tno10 CHAR(12),/*教师编号*/
+ qjj_Cno10 CHAR(12),/*课程编号*/
+ qjj_Classno10 CHAR(12),/*班级编号*/
+PRIMARY KEY(qjj_Classno10,qjj_Cno10),
+ CONSTRAINT Class_Teach FOREIGN KEY (qjj_Classno10) REFERENCES Qinjj_Class10,
+ /*qjj_Classno10是Qinjj_Class10的外键*/
+ CONSTRAINT Tno_Teach FOREIGN KEY (qjj_Tno10) REFERENCES Qinjj_Teacher10,
+ /*qjj_Tno10是Qinjj_Teacher10的外键*/
+ CONSTRAINT Cno_Teach FOREIGN KEY (qjj_Cno10) REFERENCES Qinjj_Course10,
+ /*qjj_Cno10是Qinjj_Course10的外键*/
+)
+
+/*成绩表*/
+CREATE TABLE Qinjj_Report10
+(
+ qjj_Sno10 CHAR(12),/*学号*/
+ qjj_Cno10 CHAR(12),/*课程编号*/
+ qjj_Tno10 CHAR(12),/*教师编号*/
+ qjj_Grade10 INT CHECK(qjj_Grade10>=0 AND qjj_Grade10<=100),/*成绩*/
+ PRIMARY KEY(qjj_Sno10,qjj_Cno10),
+  CONSTRAINT Tno_Reports FOREIGN KEY (qjj_Tno10) REFERENCES Qinjj_Teacher10,
+ /*qjj_Sno10是Qinjj_Teacher10的外键*/
+ CONSTRAINT Sno_Reports FOREIGN KEY (qjj_Sno10) REFERENCES Qinjj_Student10,
+ /*qjj_Sno10是Qinjj_Students10的外键*/
+ CONSTRAINT Cno_Reports FOREIGN KEY (qjj_Cno10) REFERENCES Qinjj_Course10,
+ /*qjj_Cno10是Qinjj_Courses10的外键*/
+)
+
+/*学生详细信息及成绩视图*/
+create view Qinjj_stu_grade_view10
+as
+select Qinjj_Student10.qjj_Sno10,Qinjj_Student10.qjj_Classno10,Qinjj_Course10.qjj_Cno10,Qinjj_Course10.qjj_Cname10,Qinjj_Course10.qjj_Cterm10,
+       Qinjj_Report10.qjj_Grade10,Qinjj_Teacher10.qjj_Tname10,Qinjj_Teacher10.qjj_Tno10
+from Qinjj_Student10,Qinjj_Course10,Qinjj_Report10,Qinjj_Teacher10
+where Qinjj_Student10.qjj_Sno10=Qinjj_Report10.qjj_Sno10
+  and Qinjj_Course10.qjj_Cno10=Qinjj_Report10.qjj_Cno10
+  and Qinjj_Teacher10.qjj_Tno10=Qinjj_Report10.qjj_Tno10
+go
+
+/*教师授课对应视图*/
+create view Qinjj_tea_cou_view10
+as
+select Qinjj_CC10.qjj_Tno10,Qinjj_CC10.qjj_Classno10,Qinjj_Teacher10.qjj_Tname10,Qinjj_Course10.*
+from Qinjj_CC10,Qinjj_Course10,Qinjj_Teacher10
+where Qinjj_Course10.qjj_Cno10=Qinjj_CC10.qjj_Cno10 
+  and Qinjj_CC10.qjj_Tno10=Qinjj_Teacher10.qjj_Tno10
+go
+
+/*班级开设课程平均分视图*/
+create view Qinjj_class_avg_view10
+as
+select qjj_Cno10,qjj_Tno10,qjj_Classno10,AVG(qjj_Grade10)"qjj_avg_grade10"
+from Qinjj_stu_grade_view10
+group by qjj_Cno10,qjj_Tno10,qjj_Classno10
+go
+
+/*班级学生总数视图*/
+create view Qinjj_class_count_view10
+as
+select qjj_Classno10,count(qjj_Sno10)"qjj_count_stu10"
+from Qinjj_Student10
+group by qjj_Classno10
+go
+
+/*课程所含人数及平均分汇总视图*/
+create view Qinjj_avg_count_view10
+as
+select Qinjj_tea_cou_view10.qjj_Tno10,Qinjj_tea_cou_view10.qjj_Cno10,
+     qjj_Cname10,Qinjj_tea_cou_view10.qjj_Classno10,Qinjj_class_avg_view10.qjj_avg_grade10,
+	 Qinjj_class_count_view10.qjj_count_stu10
+from Qinjj_class_count_view10,Qinjj_class_avg_view10,Qinjj_tea_cou_view10
+where Qinjj_tea_cou_view10.qjj_Cno10=Qinjj_class_avg_view10.qjj_Cno10
+  and Qinjj_tea_cou_view10.qjj_Classno10=Qinjj_class_count_view10.qjj_Classno10
+  and Qinjj_tea_cou_view10.qjj_Classno10=Qinjj_class_avg_view10.qjj_Classno10
+  and Qinjj_class_avg_view10.qjj_Classno10=Qinjj_class_count_view10.qjj_Classno10
+  and Qinjj_tea_cou_view10.qjj_Tno10=Qinjj_class_avg_view10.qjj_Tno10
+ go
+
+/*学生应有课程视图*/
+create view Qinjj_CCTS_view10
+as
+select Qinjj_tea_cou_view10.qjj_Classno10,qjj_Tno10,qjj_Tname10,qjj_Cno10,qjj_Cname10,Qinjj_Student10.qjj_Sno10,Qinjj_Student10.qjj_Sname10
+from Qinjj_tea_cou_view10,Qinjj_Student10
+where Qinjj_Student10.qjj_Classno10=Qinjj_tea_cou_view10.qjj_Classno10
+go
+
+/*建立对班级号的索引*/
+create unique index classes_ClassNo ON Qinjj_Class10(qjj_ClassNo10)
+
+/*建立对课程号的索引*/
+create unique index courses_Cno ON Qinjj_Course10(qjj_Cno10)
+
+/*建立对学号的索引*/
+create unique index students_Sno ON Qinjj_Student10(qjj_Sno10)
+
+/*建立对教师工号的索引*/
+create unique index teachers_Tno ON Qinjj_Teacher10(qjj_Tno10)
+
+/*建立级联删除触发器UPD_delete*/
+CREATE TRIGGER UPD_delete ON Qinjj_Student10
+FOR delete
+AS
+delete from Qinjj_Report10
+where qjj_Sno10 =(select qjj_Sno10 from deleted)
+/***********************************/
+
+
+/*建立触发器UPD_grade*/
+create trigger UPD_grade ON Qinjj_Report10
+FOR INSERT,UPDATE
+AS
+IF(SELECT qjj_Grade10 FROM INSERTED) < 0
+OR
+(SELECT qjj_Grade10 FROM INSERTED) > 100
+BEGIN
+PRINT '学生成绩必须是1~100之间的数！操作失败'
+ROLLBACK TRANSACTION
+END
+
+/*建立触发器UPD_credit*/
+CREATE TRIGGER UPD_credit ON Qinjj_Course10
+FOR INSERT,UPDATE
+AS
+IF(SELECT qjj_Ccredit10 FROM INSERTED) < 0
+BEGIN
+PRINT '学分必须是大于0的数！操作失败'
+ROLLBACK TRANSACTION
+END
+
+/*建立触发器UPD_grade2*/
+/*用于统计学分*/
+CREATE TRIGGER UPD_grade2 ON Qinjj_Report10
+FOR INSERT,UPDATE
+AS
+UPDATE Qinjj_Student10
+SET qjj_Scredit10 = (SELECT SUM(qjj_Ccredit10)
+    FROM Qinjj_Course10
+    WHERE qjj_Cno10 IN
+    (SELECT qjj_Cno10 
+     FROM Qinjj_Report10
+     WHERE Qinjj_Report10.qjj_Grade10 >= 60
+     AND Qinjj_Report10.qjj_Sno10 IN
+     (SELECT qjj_Sno10
+      FROM INSERTED)))
+     WHERE Qinjj_Student10.qjj_Sno10 IN
+     (SELECT qjj_Sno10
+      FROM INSERTED)
+
+/*建立触发器BUD_Spassword*/
+/*设置学生的默认登陆密码123456*/
+CREATE TRIGGER BUD_Spassword ON Qinjj_Student10
+FOR INSERT
+AS
+UPDATE Qinjj_Student10
+SET qjj_Spass10 = '123456'
+WHERE qjj_Sno10 IN(SELECT qjj_Sno10 FROM INSERTED)
+
+/*建立触发器BUD_Tpassword*/
+/*设置教师的默认登陆密码123456*/
+CREATE TRIGGER BUD_Tpassword ON Qinjj_Teacher10
+FOR INSERT
+AS
+UPDATE Qinjj_Teacher10
+SET qjj_Tpass10 = '123456'
+WHERE qjj_Tno10 IN(SELECT qjj_Tno10 FROM INSERTED)
+
+/*存储过程*/
+CREATE PROCEDURE InsertResult
+(@qjj_Sno char(12),
+ @qjj_Cno char(12),
+ @qjj_Grade int 
+)
+AS
+SET NOCOUNT ON
+DECLARE @qCount int SET @qCount=0
+DECLARE @qCourse int SET @qCourse=0
+DECLARE @nExistAchievement int SET @nExistAchievement=0
+SELECT @qCount=COUNT(qjj_Sno10)
+FROM Qinjj_Student10
+WHERE Qinjj_Student10.qjj_Sno10=@qjj_Sno
+IF @qCount<1
+BEGIN
+PRINT'学生表中不存在此学号，请检查后重新输入'
+RETURN
+END
+
+SELECT @qCourse=COUNT(qjj_Cno10)
+FROM Qinjj_Course10
+WHERE Qinjj_Course10.qjj_Cno10=@qjj_Cno
+IF @qCourse<1
+BEGIN
+PRINT'还没有这门课程，请检查后重新输入'
+RETURN
+END
+
+UPDATE Qinjj_Report10
+SET Qinjj_Report10.qjj_Grade10=@qjj_Grade
+WHERE Qinjj_Report10.qjj_Sno10=@qjj_Sno
+PRINT'成绩添加成功'
+
